@@ -1,26 +1,24 @@
-# Use an official Python runtime as a parent image
 FROM python:3.11-slim
-
-# Set the working directory in the container
-WORKDIR /app
-
-# Install system dependencies (needed for some python packages)
-RUN apt-get update && apt-get install -y --no-install-recommends \
+ 
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+ 
+# Install system build dependencies
+RUN apt-get update && apt-get install -y \
     gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy the requirements file into the container at /app
-COPY requirements.txt .
-
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install gunicorn
-
-# Copy the current directory contents into the container at /app
-COPY . .
-
-# Expose port 8000 for the Django app
+    python3-dev \
+    build-essential \
+&& rm -rf /var/lib/apt/lists/*
+ 
+WORKDIR /app
+ 
+COPY requirements.txt /app/
+RUN pip install --upgrade pip && pip install -r requirements.txt
+ 
+run pip install gunicorn
+ 
+COPY . /app/
+ 
 EXPOSE 8000
-
-# Run migrations and start the server using Gunicorn
-CMD ["sh", "-c", "python manage.py migrate && gunicorn hrms_backend.wsgi:application --bind 0.0.0.0:8000"]
+ 
+CMD ["gunicorn", "BudgetTracker.wsgi:application", "--bind", "0.0.0.0:8000"]
